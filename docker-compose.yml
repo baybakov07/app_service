@@ -1,24 +1,26 @@
+version: '3.8'
 services:
-  web-app:
-    build:
-      context: .
-    ports:
-      - "8000:8000"
+  web:
+    build: ./service
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./service:/service
-    environment:
-      - DB_HOST=database
-      - DB_NAME=dbname
-      - DB_USER=dbuser
-      - DB_PASS=pass
-    command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
+      - ./service/:/usr/src/service/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
 
-    depends_on:
-      - database
-  database:
-    image: postgres:14.6-alpine
+  db:
+    # Образ и версия базы, которую мы будем использовать
+    image: postgres:12.0-alpine
+    # Внешний том(volume) и место где он будет подключен внутри контейнера
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_DB=dbname
-      - POSTGRES_USER=dbuser
-      - POSTGRES_PASSWORD=pass
+      # Учетные данные, которые можно будет переопределить
+      - POSTGRES_USER=django_user
+      - POSTGRES_PASSWORD=django_password
+      - POSTGRES_DB=django_db
+volumes:
+  postgres_volume:
+

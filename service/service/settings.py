@@ -9,24 +9,22 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-import os
+from os import environ
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ys=vp(dvta(92p$a_dhsnqa3rd$cbo2%wx@_r(84p=$zq(1hn@'
+SECRET_KEY = environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = int(environ.get('DEBUG', default=0))
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = environ.get('ALLOWED_HOSTS').split(' ')
 
 # Application definition
 
@@ -37,9 +35,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'clients',
-    'services',
+    'students',
     'service',
+    'material',
 ]
 
 MIDDLEWARE = [
@@ -72,17 +70,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'service.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.environ.get('DB_HOST'),
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
+        'ENGINE': environ.get('POSTGRES_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': environ.get('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
+        'USER': environ.get('POSTGRES_USER', 'user'),
+        'PASSWORD': environ.get('POSTGRES_PASSWORD', 'password'),
+        'HOST': environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': environ.get('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -104,7 +102,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -118,13 +115,18 @@ USE_L10N = True
 
 USE_TZ = True
 
+# То как статический файл будет отображаться в url
+# Пример /static/1.jpg
+STATIC_URL = "/static/"
+# По какому пути можно будет найти файлы
+STATIC_ROOT = BASE_DIR / "static"
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-STATIC_URL = '/static/'
+# Аналогично static файлам
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
