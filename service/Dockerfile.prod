@@ -1,0 +1,57 @@
+FROM python:3.8.3-alpine as builder
+
+WORKDIR /usr/src/service
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# установка зависимостей
+RUN apk update \
+    && apk add postgresql-dev gcc python3-dev musl-dev
+RUN pip install --upgrade pip
+
+# установка зависимостей
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/service/wheels -r requirements.txt
+
+
+####################
+#       FINAL      #
+####################
+
+FROM python:3.8.3-alpine
+
+# создаем директорию для пользователя
+RUN mkdir -p /home/service
+
+# создаем отдельного пользователя
+RUN addgroup -S service && adduser -S service -G service
+
+# создание каталога для приложения
+ENV HOME=/home/service
+ENV SERVICE=/home/service/web
+ENV SERVICE_HOME=/home/service
+
+RUN mkdir $SERVICE
+RUN mkdir $SERVICE_HOME/static
+RUN mkdir $SERVICE_HOME/media
+WORKDIR $SERVICE
+
+# установка зависимостей и копирование из builder
+RUN apk update && apk add libpq
+COPY --from=builder /usr/src/service/wheels /wheels
+COPY --from=builder /usr/src/service/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
+# копирование entrypoint-prod.sh\nCOPY ./entrypoint.prod.sh $SERVICE
+
+# копирование проекта Django
+COPY . $SERVICE
+
+# изменение прав для пользователя service
+RUN chown -R service:service $SERVICE_HOME
+
+# изменение рабочего пользователя
+USER service
+
+ENTRYPOINT ["/home/service/web/entrypoint.prod.sh"]
